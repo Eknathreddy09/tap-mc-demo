@@ -10,7 +10,7 @@ az login
 aws configure
 read -p "Enter AWS session token: " aws_token
 aws configure set aws_session_token $aws_token
-echo "#################  Creating Resource group in Azure region: $regionaks #####################"
+echo "#################  Creating Resource group tapdemo-mc-cluster-RG in Azure region: $regionaks #####################"
 az group create --name tapdemo-mc-cluster-RG --location $regionaks --subscription $subscription
 echo "################## Creating IAM Roles for EKS Cluster and nodes ###################### "
 cat <<EOF > cluster-role-trust-policy.json
@@ -66,19 +66,20 @@ for i in $(seq $u)
 do
 echo "#################  Creating $u AKS clusters in region: $regionaks #####################"
 echo "#################  Creating build cluster in AKS ######################"
-        az aks create --resource-group tapdemo-mc-cluster-RG --name partnersetap-w01-s00$i-build --subscription $subscription --node-count 1 --enable-addons monitoring --generate-ssh-keys --node-vm-size Standard_D8S_v3 -z 1 --enable-cluster-autoscaler --min-count 1 --max-count 1
+echo "###### Cluster Name: partnersetap-w01-s00$i-build"
+       az aks create --resource-group tapdemo-mc-cluster-RG --name partnersetap-w01-s00$i-build --subscription $subscription --node-count 1 --enable-addons monitoring --generate-ssh-keys --node-vm-size Standard_D8S_v3 -z 1 --enable-cluster-autoscaler --min-count 1 --max-count 1
 
 echo "#################  Creating Run cluster in AKS ######################"
 az aks create --resource-group tapdemo-mc-cluster-RG --name partnersetap-w01-s00$i-run --subscription $subscription --node-count 1 --enable-addons monitoring --generate-ssh-keys --node-vm-size Standard_D8S_v3 -z 1 --enable-cluster-autoscaler --min-count 1 --max-count 1
-
+echo "###### Cluster Name: partnersetap-w01-s00$i-run"
 echo "#################  Creating View cluster in EKS ######################"
 ekscreatecluster=$(aws eks create-cluster --region $regioneks --name partnersetap-w01-s00$i-view --kubernetes-version 1.21 --role-arn $rolearn --resources-vpc-config subnetIds=$pubsubnet1,$pubsubnet2,securityGroupIds=$sgid)
 aws eks update-kubeconfig --region $regioneks --name partnersetap-w01-s00$i-view
 rolenodearn=$(aws iam get-role --role-name tap-EKSNodeRole --query Role.Arn --output text)
 sleep 600
 echo "#################  Creating Node group for View cluster partnersetap-w01-s00$i-view in EKS ######################"
-aws eks create-nodegroup --cluster-name partnersetap-w01-s00$i-view --nodegroup-name partnersetap-w01-s00$i-view-ng --node-role $rolenodearn --instance-types t2.2xlarge --scaling-config minSize=1,maxSize=1,desiredSize=1 --disk-size 40  --subnets $pubsubnet1
-
+eksngcreate=$(aws eks create-nodegroup --cluster-name partnersetap-w01-s00$i-view --nodegroup-name partnersetap-w01-s00$i-view-ng --node-role $rolenodearn --instance-types t2.2xlarge --scaling-config minSize=1,maxSize=1,desiredSize=1 --disk-size 40  --subnets $pubsubnet1)
+echo "###### Cluster Name: partnersetap-w01-s00$i-view"
 done
 else
 for i in $(seq 1 9)
@@ -86,28 +87,34 @@ do
 echo "#################  Creating $u AKS clusters in region: $regionaks #####################"
 echo "#################  Creating build cluster in AKS ######################"
 az aks create --resource-group tapdemo-mc-cluster-RG --name partnersetap-w01-s00$i-build --subscription $subscription --node-count 1 --enable-addons monitoring --generate-ssh-keys --node-vm-size Standard_D8S_v3 -z 1 --enable-cluster-autoscaler --min-count 1 --max-count 1
+echo "###### Cluster Name: partnersetap-w01-s00$i-build created"
 echo "#################  Creating Run cluster in AKS ######################"
 az aks create --resource-group tapdemo-mc-cluster-RG --name partnersetap-w01-s00$i-run --subscription $subscription --node-count 1 --enable-addons monitoring --generate-ssh-keys --node-vm-size Standard_D8S_v3 -z 1 --enable-cluster-autoscaler --min-count 1 --max-count 1
+echo "###### Cluster Name: partnersetap-w01-s00$i-run created"
 echo "#################  Creating View cluster in EKS ######################"
 ekscreatecluster=$(aws eks create-cluster --region $regioneks --name partnersetap-w01-s00$i-view --kubernetes-version 1.21 --role-arn $rolearn --resources-vpc-config subnetIds=$pubsubnet1,$pubsubnet2,securityGroupIds=$sgid)
 aws eks update-kubeconfig --region $regioneks --name partnersetap-w01-s00$i-view
 rolenodearn=$(aws iam get-role --role-name tap-EKSNodeRole --query Role.Arn --output text)
 sleep 600
 echo "#################  Creating Node group for View cluster partnersetap-w01-s00$i-view in EKS ######################"
-aws eks create-nodegroup --cluster-name partnersetap-w01-s00$i-view --nodegroup-name partnersetap-w01-s00$i-view-ng --node-role $rolenodearn --instance-types t2.2xlarge --scaling-config minSize=1,maxSize=1,desiredSize=1 --disk-size 40  --subnets $pubsubnet1
+eksngcreate=$(aws eks create-nodegroup --cluster-name partnersetap-w01-s00$i-view --nodegroup-name partnersetap-w01-s00$i-view-ng --node-role $rolenodearn --instance-types t2.2xlarge --scaling-config minSize=1,maxSize=1,desiredSize=1 --disk-size 40  --subnets $pubsubnet1)
+echo "###### Cluster Name: partnersetap-w01-s00$i-view created"
 done
 for i in $(seq 10 $u)
 do
 echo "#################  Creating build cluster in AKS ######################"
 az aks create --resource-group tapdemo-mc-cluster-RG --name partnersetap-w01-s0$i-build --subscription $subscription --node-count 1 --enable-addons monitoring --generate-ssh-keys --node-vm-size Standard_D8S_v3 -z 1 --enable-cluster-autoscaler --min-count 1 --max-count 1
+echo "###### Cluster Name: partnersetap-w01-s0$i-build created"
 echo "#################  Creating Run cluster in AKS ######################"
 az aks create --resource-group tapdemo-mc-cluster-RG --name partnersetap-w01-s0$i-run --subscription $subscription --node-count 1 --enable-addons monitoring --generate-ssh-keys --node-vm-size Standard_D8S_v3 -z 1 --enable-cluster-autoscaler --min-count 1 --max-count 1
+echo "###### Cluster Name: partnersetap-w01-s0$i-run created"
 echo "#################  Creating View cluster in EKS ######################"
 ekscreatecluster=$(aws eks create-cluster --region $regioneks --name partnersetap-w01-s0$i-view --kubernetes-version 1.21 --role-arn $rolearn --resources-vpc-config subnetIds=$pubsubnet1,$pubsubnet2,securityGroupIds=$sgid)
 aws eks update-kubeconfig --region $regioneks --name partnersetap-w01-s0$i-view
 rolenodearn=$(aws iam get-role --role-name tap-EKSNodeRole --query Role.Arn --output text)
 sleep 600
 echo "#################  Creating Node group for View cluster partnersetap-w01-s0$i-view in EKS ######################"
-aws eks create-nodegroup --cluster-name partnersetap-w01-s0$i-view --nodegroup-name partnersetap-w01-s0$i-view-ng --node-role $rolenodearn --instance-types t2.2xlarge --scaling-config minSize=1,maxSize=1,desiredSize=1 --disk-size 40  --subnets $pubsubnet1
+eksngcreate=$(aws eks create-nodegroup --cluster-name partnersetap-w01-s0$i-view --nodegroup-name partnersetap-w01-s0$i-view-ng --node-role $rolenodearn --instance-types t2.2xlarge --scaling-config minSize=1,maxSize=1,desiredSize=1 --disk-size 40  --subnets $pubsubnet1)
+echo "###### Cluster : partnersetap-w01-s0$i-view created"
 done
 fi
