@@ -44,6 +44,12 @@ az login --service-principal -u <App ID> -p <Password> --tenant <Tenent ID>
 az account set --subscription <subscriptionid>
 ```
 
+###### SE will provide the AWS Credentials, execute in terminal and enter the values as instructed
+
+```execute
+aws configure
+```
+
 <p style="color:blue"><strong> Provide ACR repo password. "This will be given by SE" </strong></p>
 
 ```copy-and-edit
@@ -51,29 +57,60 @@ export DOCKER_REGISTRY_PASSWORD=<ACR Repo password>
 ```
 
 ```execute
-az aks get-credentials --resource-group tap-partner-demo --name {{ session_namespace }}-cluster
+az aks get-credentials --resource-group tap-partner-demo --name {{ session_namespace }}-build
 ```
-<p style="color:blue"><strong> Check if the current context is set to "{{ session_namespace }}-cluster" </strong></p>
+
+```execute
+az aks get-credentials --resource-group tap-partner-demo --name {{ session_namespace }}-run
+```
+
+```copy-and-edit
+aws eks update-kubeconfig --region <region> --name {{ session_namespace }}-view
+```
+
+<p style="color:blue"><strong> Check if you can see all the 3 clusters i.e., Build, Run, View </strong></p>
 
 ```execute
 kubectl config get-contexts
 ```
+
+##### Build
+
+<p style="color:blue"><strong> Change the context to build cluster" </strong></p>
+
+```execute
+kubectl config use-context {{ session_namespace }}-build
+```
+
 <p style="color:blue"><strong> Create a namespace </strong></p>
 
 ```execute
 kubectl create ns tap-install
 ```
+
+```execute
+kubectl create -f $HOME/multi-cluster-demo/tap-gui-viewer-service-account-rbac.yaml
+```
+```execute
+CLUSTER_URL_BUILD=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+```
+```execute
+CLUSTER_TOKEN_BUILD=$(kubectl -n tap-gui get secret $(kubectl -n tap-gui get sa tap-gui-viewer -o=json | jq -r '.secrets[0].name') -o=json | jq -r '.data["token"]' | base64 --decode)
+```
+
 <p style="color:blue"><strong> Create secret registry-credentials </strong></p>
 
 ```copy-and-edit
 kubectl create secret docker-registry registry-credentials --docker-server=tappartnerdemoacr.azurecr.io --docker-username=tappartnerdemoacr --docker-password=$DOCKER_REGISTRY_PASSWORD -n tap-install
 ```
+
 <p style="color:blue"><strong> Set environment variable </strong></p>
 
 ```execute
 export INSTALL_BUNDLE=registry.tanzu.vmware.com/tanzu-cluster-essentials/cluster-essentials-bundle@sha256:ab0a3539da241a6ea59c75c0743e9058511d7c56312ea3906178ec0f3491f51d
 export INSTALL_REGISTRY_HOSTNAME=registry.tanzu.vmware.com
 ```
+
 <p style="color:blue"><strong> Provide the Tanzu network username </strong></p>
 
 ```copy-and-edit
@@ -126,9 +163,65 @@ sudo tanzu package repository add tanzu-tap-repository --url tappartnerdemoacr.a
 sudo tanzu package repository get tanzu-tap-repository --namespace tap-install
 ```
 
+#### RUN
+
+```execute
+kubectl config use-context {{ session_namespace }}-run
+```
+
+<p style="color:blue"><strong> Create a namespace </strong></p>
+
+```execute
+kubectl create ns tap-install
+```
+
+```execute
+kubectl create -f $HOME/multi-cluster-demo/tap-gui-viewer-service-account-rbac.yaml
+```
+
+```execute
+CLUSTER_URL_RUN=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+```
+
+```execute
+CLUSTER_TOKEN_RUN=$(kubectl -n tap-gui get secret $(kubectl -n tap-gui get sa tap-gui-viewer -o=json | jq -r '.secrets[0].name') -o=json | jq -r '.data["token"]' | base64 --decode)
+```
+
+<p style="color:blue"><strong> Create secret registry-credentials </strong></p>
+
+```copy-and-edit
+kubectl create secret docker-registry registry-credentials --docker-server=tappartnerdemoacr.azurecr.io --docker-username=tappartnerdemoacr --docker-password=$DOCKER_REGISTRY_PASSWORD -n tap-install
+```
+
+<p style="color:blue"><strong> Install  </strong></p>
+
+```execute
+./install.sh -y
+```
+
+<p style="color:blue"><strong> Create tap-registry secret  </strong></p>
+
+
+```execute
+sudo tanzu secret registry add tap-registry --username tappartnerdemoacr --password $DOCKER_REGISTRY_PASSWORD --server tappartnerdemoacr.azurecr.io --export-to-all-namespaces --yes --namespace tap-install
+```
+
+<p style="color:blue"><strong> Add the package repository </strong></p>
+
+```execute
+sudo tanzu package repository add tanzu-tap-repository --url tappartnerdemoacr.azurecr.io/tap-demo/tap-packages:1.1.0 --namespace tap-install
+```
+
+<p style="color:blue"><strong> Get the available packages </strong></p>
+
+```execute
+sudo tanzu package repository get tanzu-tap-repository --namespace tap-install
+```
+
 ```execute
 sudo tanzu package available list --namespace tap-install
 ```
+
 <p style="color:blue"><strong> Copy the output and same should be updated in tap-values </strong></p>
 
 ```execute-1
