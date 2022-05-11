@@ -194,39 +194,86 @@ tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/m
 tanzu package installed list -A
 ```
 
-<p style="color:blue"><strong> List the Installed packages </strong></p>
+<p style="color:blue"><strong> Set up developer namespace in build cluster </strong></p>
 
 ```execute
 kubectl apply -f developer.yaml -n tap-install
 ```
 
+<p style="color:blue"><strong> Since this workshop includes OOTB - test and scan, deploy the scanpolicy </strong></p>
+
 ```execute
 kubectl apply -f scanpolicy.yaml -n tap-install
 ```
+
+<p style="color:blue"><strong> Deploy tekton pipeline </strong></p>
 
 ```execute
 kubectl apply -f tekton-pipeline.yaml -n tap-install
 ```
 
+<p style="color:blue"><strong> Install grype scanner </strong></p>
+
 ```execute
 tanzu package install grype-scanner --package-name grype.scanning.apps.tanzu.vmware.com --version 1.1.0  --namespace tap-install -f ootb-supply-chain-basic-values.yaml
 ```
+
+<p style="color:blue"><strong> create a workload </strong></p>
+###### Provide the github account name and execute the below command
 
 ```copy-and-edit
 tanzu apps workload create tanzu-java-web-app  --git-repo https://github.com/<github account name>/{{ session_namespace }}-mc --git-branch main --type web --label apps.tanzu.vmware.com/has-tests=true --label app.kubernetes.io/part-of=tanzu-java-web-app  --type web -n tap-install --yes
 ```
 
+<p style="color:blue"><strong> Monitor the progress of workload creation in terminal-2 </strong></p>
+
+```execute-2
+sudo tanzu apps workload tail tanzu-java-web-app --since 10m --timestamp -n tap-install
+```
+
+<p style="color:blue"><strong> Get the status of deployed application, status should be ready with an url as shown in screenshot below </strong></p>
+
 ```execute
 tanzu apps workload get tanzu-java-web-app -n tap-install
 ```
+
+<p style="color:blue"><strong> Check all the installed applications </strong></p>
+
+```execute
+sudo tanzu apps workload list -n tap-install
+```
+
+<p style="color:blue"><strong> Get the status of deployed application, status should be ready with an url as shown in screenshot below </strong></p>
+
+```execute
+sudo tanzu apps workload get tanzu-java-web-app -n tap-install
+```
+
+<p style="color:blue"><strong> Get the pods in tap-install namespace </strong></p>
+
+```execute
+kubectl get pods -n tap-install
+```
+
+<p style="color:blue"><strong> Get the pods in tap-install namespace </strong></p>
+
+kubectl get deliverable --namespace tap-install
+
+
+
+<p style="color:blue"><strong> Create a Deliverable after verifying there’s a Deliver on the build cluster. Copy its content to a file that you can take to the Run profile clusters </strong></p>
 
 ```execute
 kubectl get deliverable tanzu-java-web-app --namespace tap-install -oyaml > deliverable.yaml
 ```
 
+<p style="color:blue"><strong> Get the pods in tap-install namespace </strong></p>
+
 ```execute
 yq 'del(.metadata."ownerReferences")' deliverable.yaml -i
 ```
+
+<p style="color:blue"><strong> Get the pods in tap-install namespace </strong></p>
 
 ```execute
 yq 'del(."status")' deliverable.yaml -i
