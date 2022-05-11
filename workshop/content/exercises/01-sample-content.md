@@ -116,6 +116,7 @@ export INSTALL_REGISTRY_HOSTNAME=registry.tanzu.vmware.com
 ```copy-and-edit
 export INSTALL_REGISTRY_USERNAME=<Tanzu Network Registry username>
 ```
+
 <p style="color:blue"><strong> Provide the Tanzu network password </strong></p>
 
 ```copy-and-edit
@@ -126,7 +127,7 @@ export INSTALL_REGISTRY_PASSWORD=<Tanzu Network password>
 cd $HOME/tanzu-cluster-essentials
 ```
 
-<p style="color:blue"><strong> Install  </strong></p>
+<p style="color:blue"><strong> Install </strong></p>
 
 ```execute
 ./install.sh -y
