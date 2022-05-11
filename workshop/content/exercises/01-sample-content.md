@@ -29,7 +29,7 @@ kubectl version
 export SESSION_NAME={{ session_namespace }}
 ```
 
-###### Login to github and fork the below repo, give the repository name as {{ session_namespace }}
+###### Login to github and fork the below repo, give the repository name as {{ session_namespace }}-mc
 
 ```dashboard:open-url
 url: https://github.com/Eknathreddy09/tanzu-java-web-app
@@ -66,11 +66,13 @@ az aks get-credentials --resource-group tap-partner-demo --name {{ session_names
 az aks get-credentials --resource-group tap-partner-demo --name {{ session_namespace }}-run
 ```
 
+###### Edit the region and execute the command on terminal-1
+
 ```copy-and-edit
 aws eks update-kubeconfig --region <region> --name {{ session_namespace }}-view
 ```
 
-<p style="color:blue"><strong> Check if you can see all the 3 clusters i.e., Build, Run, View </strong></p>
+<p style="color:blue"><strong> Check if you can see all the 3 clusters i.e., {{ session_namespace }}-Build, {{ session_namespace }}-Run, {{ session_namespace }}-View </strong></p>
 
 ```execute
 kubectl config get-contexts
@@ -84,25 +86,35 @@ kubectl config get-contexts
 kubectl config use-context {{ session_namespace }}-build
 ```
 
+```execute
+kubectl config get-contexts
+```
+
 <p style="color:blue"><strong> Create a namespace </strong></p>
 
 ```execute
 kubectl create ns tap-install
 ```
 
+<p style="color:blue"><strong> Set up a Service Account to view resources on a cluster </strong></p>
+
 ```execute
 kubectl create -f $HOME/multi-cluster-demo/tap-gui-viewer-service-account-rbac.yaml
 ```
+
+<p style="color:blue"><strong> Collect CLUSTER_URL and CLUSTER_TOKEN values by running below commands </strong></p>
+
 ```execute
 CLUSTER_URL_BUILD=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
 ```
+
 ```execute
 CLUSTER_TOKEN_BUILD=$(kubectl -n tap-gui get secret $(kubectl -n tap-gui get sa tap-gui-viewer -o=json | jq -r '.secrets[0].name') -o=json | jq -r '.data["token"]' | base64 --decode)
 ```
 
 <p style="color:blue"><strong> Create secret registry-credentials </strong></p>
 
-```copy-and-edit
+```execute
 kubectl create secret docker-registry registry-credentials --docker-server=tappartnerdemoacr.azurecr.io --docker-username=tappartnerdemoacr --docker-password=$DOCKER_REGISTRY_PASSWORD -n tap-install
 ```
 
@@ -166,26 +178,63 @@ sudo tanzu package repository add tanzu-tap-repository --url tappartnerdemoacr.a
 sudo tanzu package repository get tanzu-tap-repository --namespace tap-install
 ```
 
-tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/tap-multi-cluster/tap-values-build.yaml -n tap-install
+```execute
+cat $HOME/multi-cluster-demo/tap-values-build.yaml
+```
 
+<p style="color:blue"><strong> Install Tanzu build package using build profile </strong></p>
+
+```execute
+tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/multi-cluster-demo/tap-values-build.yaml -n tap-install
+```
+
+<p style="color:blue"><strong> List the Installed packages </strong></p>
+
+```execute
 tanzu package installed list -A
+```
 
+<p style="color:blue"><strong> List the Installed packages </strong></p>
+
+```execute
 kubectl apply -f developer.yaml -n tap-install
+```
+
+```execute
 kubectl apply -f scanpolicy.yaml -n tap-install
+```
+
+```execute
 kubectl apply -f tekton-pipeline.yaml -n tap-install
+```
 
+```execute
 tanzu package install grype-scanner --package-name grype.scanning.apps.tanzu.vmware.com --version 1.1.0  --namespace tap-install -f ootb-supply-chain-basic-values.yaml
+```
 
-tanzu apps workload create tanzu-java-web-app  --git-repo https://github.com/Eknathreddy09/tanzu-java-web-app --git-branch main --type web --label apps.tanzu.vmware.com/has-tests=true --label app.kubernetes.io/part-of=tanzu-java-web-app  --type web -n tap-install --yes
+```copy-and-edit
+tanzu apps workload create tanzu-java-web-app  --git-repo https://github.com/<github account name>/{{ session_namespace }}-mc --git-branch main --type web --label apps.tanzu.vmware.com/has-tests=true --label app.kubernetes.io/part-of=tanzu-java-web-app  --type web -n tap-install --yes
+```
 
+```execute
 tanzu apps workload get tanzu-java-web-app -n tap-install
+```
 
+```execute
 kubectl get deliverable tanzu-java-web-app --namespace tap-install -oyaml > deliverable.yaml
+```
 
+```execute
 yq 'del(.metadata."ownerReferences")' deliverable.yaml -i
+```
+
+```execute
 yq 'del(."status")' deliverable.yaml -i
+```
 
 #### RUN
+
+<p style="color:blue"><strong> Change the context to RUN cluster </strong></p>
 
 ```execute
 kubectl config use-context {{ session_namespace }}-run
