@@ -4,11 +4,13 @@
 ```execute-1
 echo "Hello, Welcome to Partner workshop session"
 ```
+
 <p style="color:blue"><strong> Click here to check the Tanzu version</strong></p>
 
 ```execute
 tanzu version
 ```
+
 <p style="color:blue"><strong> Click here to check the AZ version</strong></p>
 
 ```execute
@@ -164,6 +166,25 @@ sudo tanzu package repository add tanzu-tap-repository --url tappartnerdemoacr.a
 sudo tanzu package repository get tanzu-tap-repository --namespace tap-install
 ```
 
+tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/tap-multi-cluster/tap-values-build.yaml -n tap-install
+
+tanzu package installed list -A
+
+kubectl apply -f developer.yaml -n tap-install
+kubectl apply -f scanpolicy.yaml -n tap-install
+kubectl apply -f tekton-pipeline.yaml -n tap-install
+
+tanzu package install grype-scanner --package-name grype.scanning.apps.tanzu.vmware.com --version 1.1.0  --namespace tap-install -f ootb-supply-chain-basic-values.yaml
+
+tanzu apps workload create tanzu-java-web-app  --git-repo https://github.com/Eknathreddy09/tanzu-java-web-app --git-branch main --type web --label apps.tanzu.vmware.com/has-tests=true --label app.kubernetes.io/part-of=tanzu-java-web-app  --type web -n tap-install --yes
+
+tanzu apps workload get tanzu-java-web-app -n tap-install
+
+kubectl get deliverable tanzu-java-web-app --namespace tap-install -oyaml > deliverable.yaml
+
+yq 'del(.metadata."ownerReferences")' deliverable.yaml -i
+yq 'del(."status")' deliverable.yaml -i
+
 #### RUN
 
 ```execute
@@ -222,6 +243,73 @@ sudo tanzu package repository get tanzu-tap-repository --namespace tap-install
 ```execute
 sudo tanzu package available list --namespace tap-install
 ```
+
+tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/tap-multi-cluster/tap-values-run.yaml -n tap-install
+tanzu package installed list -A
+kubectl apply -f developer.yaml -n tap-install
+echo "############## Get the package install status #################"
+tanzu package installed get tap -n tap-install
+tanzu package installed list -A
+
+kubectl apply -f deliverable.yaml --namespace tap-install
+kubectl get deliverables --namespace tap-install
+kubectl get httpproxy --namespace tap-install
+kubectl config get-contexts
+
+##### View
+
+```execute
+kubectl config use-context {{ session_namespace }}-view
+```
+
+<p style="color:blue"><strong> Create a namespace </strong></p>
+
+```execute
+kubectl create ns tap-install
+```
+
+<p style="color:blue"><strong> Create secret registry-credentials </strong></p>
+
+```copy-and-edit
+kubectl create secret docker-registry registry-credentials --docker-server=tappartnerdemoacr.azurecr.io --docker-username=tappartnerdemoacr --docker-password=$DOCKER_REGISTRY_PASSWORD -n tap-install
+```
+
+<p style="color:blue"><strong> Install  </strong></p>
+
+cd $HOME/tanzu-cluster-essentials
+
+```execute
+./install.sh -y
+```
+
+<p style="color:blue"><strong> Create tap-registry secret  </strong></p>
+
+```execute
+sudo tanzu secret registry add tap-registry --username tappartnerdemoacr --password $DOCKER_REGISTRY_PASSWORD --server tappartnerdemoacr.azurecr.io --export-to-all-namespaces --yes --namespace tap-install
+```
+
+<p style="color:blue"><strong> Add the package repository </strong></p>
+
+```execute
+sudo tanzu package repository add tanzu-tap-repository --url tappartnerdemoacr.azurecr.io/tap-demo/tap-packages:1.1.0 --namespace tap-install
+```
+
+<p style="color:blue"><strong> Get the available packages </strong></p>
+
+```execute
+sudo tanzu package repository get tanzu-tap-repository --namespace tap-install
+```
+
+```execute
+sudo tanzu package available list --namespace tap-install
+```
+
+tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/tap-multi-cluster/tap-values-view.yaml -n tap-install
+
+tanzu package installed list -A
+
+
+##### Extra
 
 <p style="color:blue"><strong> Copy the output and same should be updated in tap-values </strong></p>
 
