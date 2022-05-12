@@ -287,15 +287,23 @@ yq 'del(."status")' deliverable.yaml -i
 kubectl config use-context {{ session_namespace }}-run
 ```
 
+```execute
+kubectl config get-contexts
+```
+
 <p style="color:blue"><strong> Create a namespace </strong></p>
 
 ```execute
 kubectl create ns tap-install
 ```
 
+<p style="color:blue"><strong> Set up a Service Account to view resources on a cluster </strong></p>
+
 ```execute
 kubectl create -f $HOME/multi-cluster-demo/tap-gui-viewer-service-account-rbac.yaml
 ```
+
+<p style="color:blue"><strong> Collect CLUSTER_URL and CLUSTER_TOKEN values by running below commands </strong></p>
 
 ```execute
 CLUSTER_URL_RUN=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
@@ -314,6 +322,10 @@ kubectl create secret docker-registry registry-credentials --docker-server=tappa
 <p style="color:blue"><strong> Install  </strong></p>
 
 ```execute
+cd $HOME/tanzu-cluster-essentials
+```
+
+```execute
 ./install.sh -y
 ```
 
@@ -330,27 +342,53 @@ sudo tanzu secret registry add tap-registry --username tappartnerdemoacr --passw
 sudo tanzu package repository add tanzu-tap-repository --url tappartnerdemoacr.azurecr.io/tap-demo/tap-packages:1.1.0 --namespace tap-install
 ```
 
-<p style="color:blue"><strong> Get the available packages </strong></p>
+<p style="color:blue"><strong> Get the package status</strong></p>
 
 ```execute
 sudo tanzu package repository get tanzu-tap-repository --namespace tap-install
 ```
 
+<p style="color:blue"><strong> List the available packages </strong></p>
+
+
 ```execute
 sudo tanzu package available list --namespace tap-install
 ```
 
-tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/tap-multi-cluster/tap-values-run.yaml -n tap-install
-tanzu package installed list -A
-kubectl apply -f developer.yaml -n tap-install
-echo "############## Get the package install status #################"
-tanzu package installed get tap -n tap-install
-tanzu package installed list -A
+<p style="color:blue"><strong> Install Tanzu package - Run profile </strong></p>
 
+```execute
+tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/tap-multi-cluster/tap-values-run.yaml -n tap-install
+```
+
+<p style="color:blue"><strong> List the installed packages </strong></p>
+
+```execute
+tanzu package installed list -A
+```
+
+<p style="color:blue"><strong> Set up developer namespace in RUN cluster </strong></p>
+
+```execute
+kubectl apply -f developer.yaml -n tap-install
+```
+
+<p style="color:blue"><strong> Apply the Deliverable in this Run profile cluster </strong></p>
+
+```execute
 kubectl apply -f deliverable.yaml --namespace tap-install
+```
+
+<p style="color:blue"><strong> Verify the Deliverable is started and Ready </strong></p>
+
+```execute
 kubectl get deliverables --namespace tap-install
+```
+<p style="color:blue"><strong> Query the URL of application </strong></p>
+
+```execute
 kubectl get httpproxy --namespace tap-install
-kubectl config get-contexts
+```
 
 ##### View
 
@@ -400,10 +438,21 @@ sudo tanzu package repository get tanzu-tap-repository --namespace tap-install
 sudo tanzu package available list --namespace tap-install
 ```
 
+```execute
+cat $HOME/multi-cluster-demo/tap-values-view.yaml
+```
+
+<p style="color:blue"><strong> Install Tanzu package using View profile </strong></p>
+
+```execute
 tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/tap-multi-cluster/tap-values-view.yaml -n tap-install
+```
 
+<p style="color:blue"><strong> List the Installed packages </strong></p>
+
+```execute
 tanzu package installed list -A
-
+```
 
 ##### Extra
 
@@ -443,30 +492,8 @@ file: ~/tap-values.yaml
 line: 44
 ```
 
-<p style="color:blue"><strong> Install Tanzu package </strong></p>
 
-```execute
-sudo tanzu package install tap -p tap.tanzu.vmware.com -v 1.1.0 --values-file $HOME/tap-values.yaml -n tap-install
-```
-<p style="color:blue"><strong> List the packages installed </strong></p>
 
-```execute
-tanzu package installed list -A
-```
-
-image: expected
-
-<p style="color:blue"><strong> Check the reconcile status of tap package </strong></p>
-
-```execute
-tanzu package installed get tap -n tap-install
-```
-
-<p style="color:blue"><strong> List the supply chain list </strong></p>
-
-```execute
-tanzu apps cluster-supply-chain list
-```
 
 <p style="color:blue"><strong> Collect the load balancer IP </strong></p>
 
@@ -488,80 +515,8 @@ url: https://tap-gui.{{ session_namespace }}.demo.captainvirtualization.in
 Example for ref: 
 ![TAP GUI](images/tap-gui-1.png)
 
-<p style="color:blue"><strong> Setup developer namespace </strong></p>
-
-```execute
-kubectl apply -f $HOME/developer.yaml -n tap-install
-```
-
-<p style="color:blue"><strong> Deploy Tekton pipeline </strong></p>
-
-```execute
-kubectl apply -f $HOME/tekton-pipeline.yaml -n tap-install
-```
-
-<p style="color:blue"><strong> Deploy Scanpolicy </strong></p>
-
-```execute
-kubectl apply -f $HOME/scanpolicy.yaml -n tap-install
-```
-
-<p style="color:blue"><strong> Install grype scanner package </strong></p>
-
-```execute
-sudo tanzu package install grype-scanner --package-name grype.scanning.apps.tanzu.vmware.com --version 1.0.0  --namespace tap-install -f $HOME/ootb-supply-chain-basic-values.yaml
-```
-
-<p style="color:blue"><strong> List the packages installed </strong></p>
-
-```execute
-tanzu package installed list -A
-```
-
-###### If all the packages are installed successfully, now its time to deploy an application on TAP. Provide the gitrepo that you have forked in the beginning. 
 
 
-```copy-and-edit
-sudo tanzu apps workload create tanzu-java-web-app  --git-repo <replace me with your git repo path> --git-branch main --type web --label apps.tanzu.vmware.com/has-tests=true --label app.kubernetes.io/part-of=tanzu-java-web-app -n tap-install --yes
-```
-
-<p style="color:blue"><strong> Get the status of deployed application </strong></p>
-
-```execute
-sudo tanzu apps workload get tanzu-java-web-app -n tap-install
-```
-
-<p style="color:blue"><strong> Check the live progress </strong></p>
-
-```execute-2
-sudo tanzu apps workload tail tanzu-java-web-app --since 10m --timestamp -n tap-install
-```
-
-<p style="color:blue"><strong> Check all the installed applications </strong></p>
-
-```execute
-sudo tanzu apps workload list -n tap-install
-```
-
-<p style="color:blue"><strong> Get the status of deployed application, status should be ready with an url as shown in screenshot below </strong></p>
-
-```execute
-sudo tanzu apps workload get tanzu-java-web-app -n tap-install
-```
-
-![Local host](images/tap-workload-2.png)
-
-<p style="color:blue"><strong> Get the pods in tap-install namespace </strong></p>
-
-```execute
-kubectl get pods -n tap-install
-```
-
-###### Note: Workload creation takes 5 mins to complete, proceed further once you see ready status
-
-```execute
-sudo tanzu apps workload get tanzu-java-web-app -n tap-install
-```
 
 ![Local host](images/workload-create.png)
 
