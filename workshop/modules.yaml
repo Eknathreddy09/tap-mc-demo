@@ -5,23 +5,27 @@ modules:
     setup-environment:
         name: Workshop overview
         exit_sign: Start Workshop
-    exercises/01-sample-content:
-        name: TAP Workshop
-        exit_sign: App Live
-    exercises/02-app-live:
-        name: Explore App Live in TAP-GUI
+    exercises/01-prepare:
+        name: Preparation to install TAP
+        exit_sign: Next
+    exercises/02-install-mc:
+        name: Install multicluster TAP profiles
+        exit_sign: TAP GUI
+    exercises/03-tapgui:
+        name: Explore TAP GUI
         exit_sign: Supply chain
-    exercises/03-supply-chain:
-        name: Explore Supply Chain Choreographer
-        exit_sign: Accelerators
-    exercises/04-Accelerator:
-        name: Explore Accelerators
-        exit_sign: Metastore
-    exercises/05-Metastore:
-        name: Vulnerability Scanner
-        exit_sign: Live update
-    exercises/06-liveupdate:
-        name: Live update the application
+    exercises/04-supplychain:
+        name: Explore Supply chain choreographers
+        exit_sign: Migrate profiles
+    exercises/05-Migrateprofile:
+        name: Migrate profile from basic to testing
+        exit_sign: Set up Auth for TAP GUI
+    exercises/06-auth:
+        name: Set up Auth for TAP GUI
+        exit_sign: menu customization
+    exercises/07-menucustom:
+        name: Setup menu customization
+        exit_sign: Next
     workshop-summary:
         name: Workshop Summary
         exit_sign: Finish Workshop
