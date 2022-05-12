@@ -8,22 +8,28 @@ modules:
     exercises/01-prepare:
         name: Preparation to install TAP
         exit_sign: Next
-    exercises/02-install-mc:
-        name: Install multicluster TAP profiles
+    exercises/02-install-build:
+        name: Install Build cluster
+        exit_sign: Run
+    exercises/03-install-run:
+        name: Install Run cluster
+        exit_sign: View
+    exercises/04-install-view:
+        name: Install View cluster
         exit_sign: TAP GUI
-    exercises/03-tapgui:
+    exercises/05-tapgui:
         name: Explore TAP GUI
         exit_sign: Supply chain
-    exercises/04-supplychain:
+    exercises/06-supplychain:
         name: Explore Supply chain choreographers
         exit_sign: Migrate profiles
-    exercises/05-Migrateprofile:
+    exercises/07-Migrateprofile:
         name: Migrate profile from basic to testing
         exit_sign: Set up Auth for TAP GUI
-    exercises/06-auth:
+    exercises/08-auth:
         name: Set up Auth for TAP GUI
         exit_sign: menu customization
-    exercises/07-menucustom:
+    exercises/09-menucustom:
         name: Setup menu customization
         exit_sign: Next
     workshop-summary:
