@@ -106,3 +106,24 @@ kubectl get deliverables --namespace tap-install
 ```execute
 kubectl get httpproxy --namespace tap-install
 ```
+
+![Local host](images/workload-create.png)
+
+<p style="color:blue"><strong> Collect the load balancer IP </strong></p>
+
+```execute
+kubectl get svc envoy -n tanzu-system-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+###### Add an entry in local host /etc/hosts path pointing the above collected load balancer IP with tanzu-java-web-app.tap-install.captainvirtualization.in
+
+![Local host](images/tap-workload-4.png)
+
+<p style="color:blue"><strong> Access the deployed application </strong></p>
+
+```dashboard:open-url
+url: http://tanzu-java-web-app.tap-install.captainvirtualization.in
+```
+
+![Local host](images/tap-workload-3.png)
+
