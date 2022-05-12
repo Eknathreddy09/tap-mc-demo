@@ -5,10 +5,12 @@ modules:
     - workshop-overview
     - setup-environment
     - exercises/01-prepare
-    - exercises/02-install-mc
-    - exercises/03-tapgui
-    - exercises/04-supplychain
-    - exercises/05-Migrateprofile
-    - exercises/06-auth
-    - exercises/07-menucustom
+    - exercises/02-install-build
+    - exercises/03-install-run
+    - exercises/04-install-view
+    - exercises/05-tapgui
+    - exercises/06-supplychain
+    - exercises/07-Migrateprofile
+    - exercises/08-auth
+    - exercises/09-menucustom
     - workshop-summary
